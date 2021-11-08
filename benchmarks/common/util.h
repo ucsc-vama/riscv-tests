@@ -50,13 +50,18 @@ static void __attribute__((noinline)) barrier(int ncores)
   __sync_synchronize();
 
   threadsense = !threadsense;
-  if (__sync_fetch_and_add(&count, 1) == ncores-1)
+  if (__atomic_add_fetch(&count, 1, __ATOMIC_SEQ_CST) == ncores-1)
   {
     count = 0;
-    sense = threadsense;
+    int temp;
+    __atomic_exchange(&sense, &threadsense, &temp, __ATOMIC_SEQ_CST);
   }
-  else while(sense != threadsense)
-    ;
+  else {
+    int global_sense = 0;
+    do {
+      __atomic_load(&sense, &global_sense, __ATOMIC_SEQ_CST);
+    } while (global_sense != threadsense);
+  }
 
   __sync_synchronize();
 }
