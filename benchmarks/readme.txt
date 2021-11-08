@@ -46,3 +46,21 @@ points to make about the toolchain.
  + To avoid having the compiler try and use a global pointer (ie using
    register 28 to point to a space where small global variables are
    stored) you need to use the -G 0 command line option.
+
+*************************************************************************
+Multi-core benchmarks
+-------------------------------------------------------------------------
+
+ + Fix crt.S with given number of cores. For example there are 2 cores in 
+   your RISCV system, modify line 125 at common/crt.S, from 
+     li a1, 1
+   to 
+     li a1, 2
+
+ + Multi-core benchmarks needs thread-local storage, which is supported by
+   libgcc, and libgcc requires libc. That's why you need to link with libc
+   (newlib for example). The libc must be compiled with -mcmodel=medany or
+   you will see a linker error like:
+   
+   relocation truncated to fit: R_RISCV_HI20 against symbol `_impure_ptr' 
+   defined in .sdata section
