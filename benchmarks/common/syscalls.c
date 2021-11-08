@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <sys/signal.h>
 #include "util.h"
+#include "spinlock.h"
 
 #define SYS_write 64
 
@@ -345,12 +346,18 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
   }
 }
 
+static arch_spinlock_t _print_lock;
+
 int printf(const char* fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
 
+  arch_spin_lock(&_print_lock);
+
   vprintfmt((void*)putchar, 0, fmt, ap);
+
+  arch_spin_unlock(&_print_lock);
 
   va_end(ap);
   return 0; // incorrect return value, but who cares, anyway?
