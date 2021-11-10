@@ -50,9 +50,9 @@ static void __attribute__((noinline)) barrier(int ncores)
   __sync_synchronize();
 
   threadsense = !threadsense;
-  if (__atomic_add_fetch(&count, 1, __ATOMIC_SEQ_CST) == ncores-1)
+  if (__atomic_add_fetch(&count, 1, __ATOMIC_SEQ_CST) == ncores)
   {
-    count = 0;
+    __atomic_store_n(&count, 0, __ATOMIC_SEQ_CST);
     int temp;
     __atomic_exchange(&sense, &threadsense, &temp, __ATOMIC_SEQ_CST);
   }
