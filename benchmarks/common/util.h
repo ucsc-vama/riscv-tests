@@ -47,23 +47,19 @@ static void __attribute__((noinline)) barrier(int ncores)
   static volatile int count;
   static __thread int threadsense;
 
-  __sync_synchronize();
+  __atomic_thread_fence(__ATOMIC_SEQ_CST);
 
   threadsense = !threadsense;
-  if (__atomic_add_fetch(&count, 1, __ATOMIC_SEQ_CST) == ncores)
+  if (__atomic_fetch_add(&count, 1, __ATOMIC_SEQ_CST) == ncores - 1)
   {
     __atomic_store_n(&count, 0, __ATOMIC_SEQ_CST);
-    int temp;
-    __atomic_exchange(&sense, &threadsense, &temp, __ATOMIC_SEQ_CST);
+    __atomic_exchange_n(&sense, threadsense, __ATOMIC_SEQ_CST);
   }
   else {
-    int global_sense = 0;
-    do {
-      __atomic_load(&sense, &global_sense, __ATOMIC_SEQ_CST);
-    } while (global_sense != threadsense);
+    while (__atomic_load_n(&sense, __ATOMIC_SEQ_CST) != threadsense) ;
   }
 
-  __sync_synchronize();
+  __atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
 
 static uint64_t lfsr(uint64_t x)
